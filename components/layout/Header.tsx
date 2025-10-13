@@ -150,8 +150,8 @@ export default function Header() {
                 </Link>
                 <Link
                   href="/sign-up"
-                  className="bg-white text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-white/90 transition-colors"
-                >
+                  className="text-sm font-medium hover:text-white/80 transition-colors"
+>
                   新規登録
                 </Link>
               </div>
