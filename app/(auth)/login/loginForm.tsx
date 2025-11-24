@@ -1,15 +1,15 @@
 'use client'
 
-import { useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { useState, useEffect, Suspense } from 'react'
+import { signIn, getProviders } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { MapPin, Mail, Lock, AlertCircle, Loader2, Github } from 'lucide-react'
-import type { getProviders } from 'next-auth/react'
+import type { ClientSafeProvider } from 'next-auth/react'
 
 // import Image from 'next/image'
 
-export default function LoginForm({ providers }: { providers: Awaited<ReturnType<typeof getProviders>> }) {
+function LoginFormContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/trips'
@@ -19,7 +19,12 @@ export default function LoginForm({ providers }: { providers: Awaited<ReturnType
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [customError, setCustomError] = useState('')
-  
+  const [providers, setProviders] = useState<Record<string, ClientSafeProvider> | null>(null)
+
+  // プロバイダー情報を取得
+  useEffect(() => {
+    getProviders().then(setProviders)
+  }, [])
 
   const handleCredentialsLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -205,5 +210,13 @@ export default function LoginForm({ providers }: { providers: Awaited<ReturnType
         </p>
       </div>
     </div>
+  )
+}
+
+export default function LoginForm() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginFormContent />
+    </Suspense>
   )
 }
