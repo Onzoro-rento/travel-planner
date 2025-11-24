@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { 
@@ -93,9 +94,11 @@ export default function Header() {
                   >
                     <div className="h-8 w-8 bg-white/20 rounded-full flex items-center justify-center">
                       {session.user?.image ? (
-                        <img
+                        <Image
                           src={session.user.image}
                           alt={session.user.name || ''}
+                          width={32}
+                          height={32}
                           className="h-8 w-8 rounded-full"
                         />
                       ) : (
@@ -183,9 +186,11 @@ export default function Header() {
                   <div className="flex items-center space-x-3 px-3 py-2 mb-2">
                     <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
                       {session.user?.image ? (
-                        <img
+                        <Image
                           src={session.user.image}
                           alt={session.user.name || ''}
+                          width={40}
+                          height={40}
                           className="h-10 w-10 rounded-full"
                         />
                       ) : (

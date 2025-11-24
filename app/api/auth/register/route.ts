@@ -34,7 +34,15 @@ export async function POST(request: Request) {
     })
 
     // パスワード情報を除外して返す
-    const { password: _, ...userWithoutPassword } = user
+    const userWithoutPassword = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      emailVerified: user.emailVerified,
+      image: user.image,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    }
 
     return NextResponse.json(userWithoutPassword, { status: 201 })
 

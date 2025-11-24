@@ -40,7 +40,7 @@ export default function LoginForm({ providers }: { providers: Awaited<ReturnType
         router.push(callbackUrl)
         router.refresh()
       }
-    } catch (error) {
+    } catch (_error) {
       setCustomError('ログインに失敗しました')
     } finally {
       setIsLoading(false)
