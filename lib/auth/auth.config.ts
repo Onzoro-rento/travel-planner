@@ -10,7 +10,11 @@ import bcrypt from 'bcrypt'
 
 export const authOptions: AuthOptions = {
   // Configure one or more authentication providers
-  adapter: PrismaAdapter(prisma),
+  // Note: CredentialsProvider を使う場合は adapter を使用しない（JWT strategy のみ）
+  pages: {
+    signIn: '/login',
+    error: '/login',
+  },
   providers: [
     GithubProvider({
       clientId: process.env.GITHUB_ID as string,
