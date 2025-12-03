@@ -1,7 +1,6 @@
 import {AuthOptions} from "next-auth"
 import GithubProvider from "next-auth/providers/github"
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter"
 import  prisma  from "@/lib/prisma" // 共有インスタンスをインポート
 import { JWT } from "next-auth/jwt"
 import { User} from "next-auth"
