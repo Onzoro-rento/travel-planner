@@ -26,21 +26,38 @@ model User {
   // Relations
   accounts         Account[]
   sessions         Session[]
-  createdTrips     Trip[]          @relation("TripCreator")
+  createdTrips     Trip[]     @relation("CreatedTrips")
+  places           Place[]
+  photos           Photo[]
+  reviews          Review[]
+  
+  // Relations: Membership
   tripMemberships  TripMember[]
-  schedules        Schedule[]      @relation("ScheduleCreator")
-  messages         Message[]
-  uploadedPhotos   Photo[]
-  memos            Memo[]
-  sentFriendRequests     FriendRequest[] @relation("SentRequests")
-  receivedFriendRequests FriendRequest[] @relation("ReceivedRequests")
-  friends          Friend[]        @relation("UserFriends")
-  friendOf         Friend[]        @relation("FriendUsers")
-  notifications    Notification[]
 
-  @@map("users")
+  // Relations: Friends
+  friendsAsUserA   Friendship[] @relation("UserA")
+  friendsAsUserB   Friendship[] @relation("UserB")
+
+  // Relations: Notifications
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsSent     Notification[] @relation("NotificationSender")
 }
+model Friendship {
+  id        String   @id @default(uuid())
+  userAId   String
+  userBId   String
+  status    String   @default("PENDING")
 
+  userA     User     @relation("UserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB     User     @relation("UserB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
+}
 // NextAuth.js用のモデル
 model Account {
   id                String  @id @default(uuid())
@@ -71,260 +88,132 @@ model Session {
 
   @@map("sessions")
 }
+model Notification {
+  id          String   @id @default(uuid())
+  
+  // 誰宛の通知か
+  userId      String
+  user        User     @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+
+  // 誰がアクションしたか (フレンド申請者など)
+  actorId     String
+  actor       User     @relation("NotificationSender", fields: [actorId], references: [id], onDelete: Cascade)
+
+  // 通地の種類
+  type        String   // 'FRIEND_REQUEST', 'TRIP_INVITE', 'NEW_COMMENT', 'TRIP_JOINED'
+  
+  // 既読状態
+  isRead      Boolean  @default(false)
+
+  // 関連リソース (オプショナル: 通知の種類による)
+  tripId      String?
+  trip        Trip?    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  
+  @@index([userId]) // 通知一覧を素早く取得するため
+}
 
 // 旅行モデル
 model Trip {
-  id            String      @id @default(uuid())
-  title         String      @db.VarChar(255)
-  description   String?
-  startDate     DateTime    @map("start_date") @db.Date
-  endDate       DateTime    @map("end_date") @db.Date
-  status        TripStatus  @default(DRAFT)
-  coverImageUrl String?     @map("cover_image_url")
-  createdBy     String      @map("created_by")
-  createdAt     DateTime    @default(now()) @map("created_at")
-  updatedAt     DateTime    @updatedAt @map("updated_at")
+  id             String    @id @default(uuid())
+  title          String
+  description    String?
+  startDate      DateTime
+  endDate        DateTime?
+  isShared       Boolean   @default(true)
+  status         TripStatus @default(DRAFT)
+  mapCenterLat   Float?
+  mapCenterLng   Float?
+  
+  createdBy      String
+  creator        User      @relation("CreatedTrips", fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  places         Place[]
+  members        TripMember[]
+  photos         Photo[]
+  reviews        Review[]
+  notifications  Notification[] // Tripに関連する通知
+}
+model Place {
+  id             String    @id @default(uuid())
+  tripId         String
+  trip           Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  
+  googlePlaceId  String
+  name           String
+  address        String?
+  latitude       Float
+  longitude      Float
+  
+  visitedAt      DateTime?
+  order          Int       @default(0)
 
-  // Relations
-  creator   User         @relation("TripCreator", fields: [createdBy], references: [id])
-  members   TripMember[]
-  schedules Schedule[]
-  messages  Message[]
-  photos    Photo[]
-  memos     Memo[]
-
-  @@index([startDate])
-  @@index([createdBy])
-  @@map("trips")
+  reviewText     String?
+  rating         Int?
+  
+  createdBy      String
+  creator        User      @relation(fields: [createdBy], references: [id])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  photos         Photo[]
+  reviews        Review[]
 }
 
-// 旅行参加者モデル
 model TripMember {
-  id       String             @id @default(uuid())
-  tripId   String             @map("trip_id")
-  userId   String             @map("user_id")
-  role     MemberRole         @default(MEMBER)
-  status   MemberStatus       @default(PENDING)
-  joinedAt DateTime           @default(now()) @map("joined_at")
-
-  // Relations
-  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([tripId, userId])
-  @@index([tripId])
-  @@index([userId])
-  @@map("trip_members")
+  tripId         String
+  userId         String
+  
+  role           String    @default("member")
+  joinedAt       DateTime  @default(now())
+  
+  trip           Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@id([tripId, userId])
 }
-
 // スケジュールモデル
-model Schedule {
-  id            String    @id @default(uuid())
-  tripId        String    @map("trip_id")
-  locationId    String?   @map("location_id")
-  title         String    @db.VarChar(255)
-  description   String?
-  scheduledDate DateTime  @map("scheduled_date") @db.Date
-  startTime     DateTime? @map("start_time") @db.Time()
-  endTime       DateTime? @map("end_time") @db.Time()
-  orderIndex    Int       @default(0) @map("order_index")
-  color         String    @default("#3B82F6") @db.VarChar(7)
-  createdBy     String    @map("created_by")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-
-  // Relations
-  trip     Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  location Location? @relation(fields: [locationId], references: [id])
-  creator  User      @relation("ScheduleCreator", fields: [createdBy], references: [id])
-  photos   Photo[]
-  memos    Memo[]
-
-  @@index([tripId])
-  @@index([scheduledDate])
-  @@map("schedules")
-}
-
-// 場所モデル
-model Location {
-  id            String    @id @default(uuid())
-  name          String    @db.VarChar(255)
-  description   String?
-  address       String?
-  latitude      Decimal   @db.Decimal(10, 8)
-  longitude     Decimal   @db.Decimal(11, 8)
-  googlePlaceId String?   @unique @map("google_place_id")
-  placeTypes    String[]  @map("place_types")
-  phone         String?   @db.VarChar(50)
-  website       String?
-  openingHours  Json?     @map("opening_hours") @db.JsonB
-  priceLevel    Int?      @map("price_level")
-  rating        Decimal?  @db.Decimal(2, 1)
-  createdAt     DateTime  @default(now()) @map("created_at")
-
-  // Relations
-  schedules Schedule[]
-
-  @@index([googlePlaceId])
-  @@map("locations")
-}
-
-// メッセージモデル
-model Message {
-  id        String       @id @default(uuid())
-  tripId    String       @map("trip_id")
-  userId    String       @map("user_id")
-  content   String
-  type      MessageType  @default(TEXT)
-  metadata  Json?        @db.JsonB
-  isEdited  Boolean      @default(false) @map("is_edited")
-  editedAt  DateTime?    @map("edited_at")
-  createdAt DateTime     @default(now()) @map("created_at")
-
-  // Relations
-  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id])
-
-  @@index([tripId])
-  @@index([createdAt(sort: Desc)])
-  @@map("messages")
-}
-
-// 写真モデル
 model Photo {
-  id           String    @id @default(uuid())
-  tripId       String    @map("trip_id")
-  scheduleId   String?   @map("schedule_id")
-  uploadedBy   String    @map("uploaded_by")
-  fileUrl      String    @map("file_url")
-  thumbnailUrl String?   @map("thumbnail_url")
-  caption      String?
-  takenAt      DateTime? @map("taken_at")
-  latitude     Decimal?  @db.Decimal(10, 8)
-  longitude    Decimal?  @db.Decimal(11, 8)
-  fileSize     Int?      @map("file_size")
-  mimeType     String?   @map("mime_type") @db.VarChar(50)
-  createdAt    DateTime  @default(now()) @map("created_at")
-
-  // Relations
-  trip     Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  schedule Schedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
-  uploader User      @relation(fields: [uploadedBy], references: [id])
-
-  @@index([tripId])
-  @@index([scheduleId])
-  @@map("photos")
+  id             String    @id @default(uuid())
+  url            String
+  description    String?
+  
+  tripId         String?
+  placeId        String?
+  
+  trip           Trip?     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  place          Place?    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  
+  uploadedBy     String
+  uploader       User      @relation(fields: [uploadedBy], references: [id])
+  
+  createdAt      DateTime  @default(now())
 }
 
-// メモモデル
-model Memo {
-  id         String    @id @default(uuid())
-  tripId     String    @map("trip_id")
-  scheduleId String?   @map("schedule_id")
-  userId     String    @map("user_id")
-  title      String?   @db.VarChar(255)
-  content    String
-  isPublic   Boolean   @default(true) @map("is_public")
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
+model Review {
+  id             String    @id @default(uuid())
+  text           String
+  rating         Int?
+  
+  tripId         String?
+  placeId        String?
+  
+  trip           Trip?     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  place          Place?    @relation(fields: [placeId], references: [id], onDelete: Cascade)
 
-  // Relations
-  trip     Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  schedule Schedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
-  user     User      @relation(fields: [userId], references: [id])
-
-  @@index([tripId])
-  @@map("memos")
+  createdBy      String
+  creator        User      @relation(fields: [createdBy], references: [id])
+  
+  createdAt      DateTime  @default(now())
 }
 
-// フレンド関係モデル
-model Friend {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  friendId  String   @map("friend_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relations
-  user   User @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
-  friend User @relation("FriendUsers", fields: [friendId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, friendId])
-  @@index([userId])
-  @@index([friendId])
-  @@map("friends")
-}
-
-// フレンド申請モデル
-model FriendRequest {
-  id          String              @id @default(uuid())
-  fromUserId  String              @map("from_user_id")
-  toUserId    String              @map("to_user_id")
-  message     String?
-  status      FriendRequestStatus @default(PENDING)
-  createdAt   DateTime            @default(now()) @map("created_at")
-  respondedAt DateTime?           @map("responded_at")
-
-  // Relations
-  fromUser User @relation("SentRequests", fields: [fromUserId], references: [id], onDelete: Cascade)
-  toUser   User @relation("ReceivedRequests", fields: [toUserId], references: [id], onDelete: Cascade)
-
-  @@unique([fromUserId, toUserId])
-  @@index([toUserId])
-  @@index([status])
-  @@map("friend_requests")
-}
-
-// 通知モデル
-model Notification {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  type      String   @db.VarChar(50)
-  title     String   @db.VarChar(255)
-  content   String?
-  data      Json?    @db.JsonB
-  isRead    Boolean  @default(false) @map("is_read")
-  readAt    DateTime? @map("read_at")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([isRead])
-  @@index([createdAt(sort: Desc)])
-  @@map("notifications")
-}
-
-// Enums
 enum TripStatus {
   DRAFT
-  CONFIRMED
+  PLANNING
   ONGOING
   COMPLETED
   CANCELLED
-}
-
-enum MemberRole {
-  OWNER
-  ADMIN
-  MEMBER
-}
-
-enum MemberStatus {
-  PENDING
-  ACCEPTED
-  DECLINED
-}
-
-enum MessageType {
-  TEXT
-  IMAGE
-  LOCATION
-  SCHEDULE
-}
-
-enum FriendRequestStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
 }
