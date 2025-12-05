@@ -2,277 +2,182 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
-import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { 
-  Menu, 
-  X, 
-  MapPin, 
-  Calendar, 
-  Users, 
-  History, 
-  Settings,
-  LogOut,
-  User,
-  ChevronDown,
-  Bell
+  Search,
+  MapPin,
+  List,
+  Menu,
+  X
 } from 'lucide-react'
+
 
 export default function Header() {
   const { data: session, status } = useSession()
-  const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
-
-  const navigation = [
-    { name: '旅行一覧', href: '/trips', icon: Calendar },
-    { name: '履歴', href: '/history', icon: History },
-    { name: 'フレンド', href: '/friends', icon: Users },
-  ]
-
-  const isActive = (href: string) => {
-    return pathname === href || pathname.startsWith(`${href}/`)
-  }
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/' })
   }
 
+  const isAuthenticated = status === 'authenticated'
+  const isLoading = status === 'loading'
+
   return (
-    <header className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
-      <nav className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* ロゴ */}
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <MapPin className="h-8 w-8" />
-              <span className="text-xl font-bold">旅プランナー</span>
-            </Link>
-          </div>
-
-          {/* デスクトップナビゲーション */}
-          <div className="hidden md:flex items-center space-x-8">
-            {status === 'authenticated' && (
-              <>
-                {navigation.map((item) => {
-                  const Icon = item.icon
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                        isActive(item.href)
-                          ? 'bg-white/20 text-white'
-                          : 'text-white/90 hover:bg-white/10 hover:text-white'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.name}</span>
-                    </Link>
-                  )
-                })}
-              </>
-            )}
-          </div>
-
-          {/* ユーザーメニュー（デスクトップ） */}
-          <div className="hidden md:flex items-center space-x-4">
-            {status === 'authenticated' ? (
-              <>
-                {/* 通知ボタン */}
-                <button className="relative p-2 rounded-full hover:bg-white/10 transition-colors">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
-                </button>
-
-                {/* ユーザードロップダウン */}
-                <div className="relative">
-                  <button
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-white/10 transition-colors"
-                  >
-                    <div className="h-8 w-8 bg-white/20 rounded-full flex items-center justify-center">
-                      {session.user?.image ? (
-                        <Image
-                          src={session.user.image}
-                          alt={session.user.name || ''}
-                          width={32}
-                          height={32}
-                          className="h-8 w-8 rounded-full"
-                        />
-                      ) : (
-                        <User className="h-5 w-5" />
-                      )}
-                    </div>
-                    <span className="text-sm font-medium">
-                      {session.user?.name || 'ユーザー'}
-                    </span>
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-
-                  {/* ドロップダウンメニュー */}
-                  {isUserMenuOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      />
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                        <Link
-                          href="/settings"
-                          className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <Settings className="h-4 w-4" />
-                          <span>設定</span>
-                        </Link>
-                        <hr className="my-1" />
-                        <button
-                          onClick={() => {
-                            setIsUserMenuOpen(false)
-                            handleSignOut()
-                          }}
-                          className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                        >
-                          <LogOut className="h-4 w-4" />
-                          <span>ログアウト</span>
-                        </button>
-                      </div>
-                    </>
-                  )}
+    <>
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="px-4 lg:px-6">
+          <div className="flex items-center justify-between h-16 lg:h-20">
+            {/* 左側：検索バー（デスクトップ・認証済みのみ） */}
+            {isAuthenticated && (
+              <div className="hidden lg:flex items-center flex-1 max-w-xl">
+                <div className="relative w-full">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search trips..."
+                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                  />
                 </div>
-              </>
-            ) : status === 'unauthenticated' ? (
-              <div className="flex items-center space-x-4">
-                <Link
-                  href="/login"
-                  className="text-sm font-medium hover:text-white/80 transition-colors"
-                >
-                  ログイン
-                </Link>
-                <Link
-                  href="/sign-up"
-                  className="text-sm font-medium hover:text-white/80 transition-colors"
->
-                  新規登録
+              </div>
+            )}
+
+            {/* 未認証時：ロゴエリア */}
+            {!isAuthenticated && (
+              <div className="flex items-center">
+                <Link href="/" className="flex items-center gap-2">
+                  <MapPin className="w-8 h-8 text-teal-600" />
+                  <span className="text-xl font-bold text-gray-900">TravelMap</span>
                 </Link>
               </div>
-            ) : null}
-          </div>
+            )}
 
-          {/* モバイルメニューボタン */}
-          <div className="md:hidden">
+            {/* モバイル：ハンバーガーメニュー */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 rounded-md hover:bg-white/10 transition-colors"
+              className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
             >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-          </div>
-        </div>
 
-        {/* モバイルメニュー */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {status === 'authenticated' ? (
+            {/* 中央：ビュー切り替えボタン（認証済みのみ） */}
+            {isAuthenticated && (
+              <div className="flex items-center gap-2 lg:ml-6">
+              <button
+                onClick={() => setViewMode('map')}
+                className={`
+                  flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-2.5 rounded-lg font-medium transition-all
+                  ${viewMode === 'map'
+                    ? 'bg-teal-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }
+                `}
+              >
+                <MapPin className="w-4 h-4 lg:w-5 lg:h-5" />
+                <span className="hidden sm:inline">Map</span>
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`
+                  flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-2.5 rounded-lg font-medium transition-all
+                  ${viewMode === 'list'
+                    ? 'bg-teal-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }
+                `}
+              >
+                <List className="w-4 h-4 lg:w-5 lg:h-5" />
+                <span className="hidden sm:inline">List</span>
+              </button>
+              </div>
+            )}
+
+            {/* 右側：認証ボタン */}
+            <div className="hidden lg:flex items-center gap-3 ml-6">
+              {isLoading ? (
+                <div className="px-5 py-2.5 text-sm text-gray-400">Loading...</div>
+              ) : isAuthenticated ? (
                 <>
-                  {/* ユーザー情報 */}
-                  <div className="flex items-center space-x-3 px-3 py-2 mb-2">
-                    <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
-                      {session.user?.image ? (
-                        <Image
-                          src={session.user.image}
-                          alt={session.user.name || ''}
-                          width={40}
-                          height={40}
-                          className="h-10 w-10 rounded-full"
-                        />
-                      ) : (
-                        <User className="h-6 w-6" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">
-                        {session.user?.name || 'ユーザー'}
-                      </p>
-                      <p className="text-xs text-white/70">
-                        {session.user?.email}
-                      </p>
-                    </div>
-                  </div>
-
-                  <hr className="border-white/20 my-2" />
-
-                  {/* ナビゲーション */}
-                  {navigation.map((item) => {
-                    const Icon = item.icon
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium ${
-                          isActive(item.href)
-                            ? 'bg-white/20 text-white'
-                            : 'text-white/90 hover:bg-white/10 hover:text-white'
-                        }`}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <Icon className="h-5 w-5" />
-                        <span>{item.name}</span>
-                      </Link>
-                    )
-                  })}
-
-                  <hr className="border-white/20 my-2" />
-
-                  {/* 設定・ログアウト */}
-                  <Link
-                    href="/settings"
-                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-white/90 hover:bg-white/10 hover:text-white"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Settings className="h-5 w-5" />
-                    <span>設定</span>
-                  </Link>
                   <button
-                    onClick={() => {
-                      setIsMobileMenuOpen(false)
-                      handleSignOut()
-                    }}
-                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-white/90 hover:bg-white/10 hover:text-white w-full text-left"
+                    onClick={handleSignOut}
+                    className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
                   >
-                    <LogOut className="h-5 w-5" />
-                    <span>ログアウト</span>
+                    Sign Out
                   </button>
                 </>
               ) : (
                 <>
                   <Link
                     href="/login"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-white/90 hover:bg-white/10 hover:text-white"
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="px-5 py-2.5 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    ログイン
+                    Sign In
                   </Link>
                   <Link
-                    href="/register"
-                    className="block px-3 py-2 rounded-md text-base font-medium bg-white text-blue-600 hover:bg-white/90"
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    href="/sign-up"
+                    className="px-5 py-2.5 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition-colors shadow-md"
                   >
-                    新規登録
+                    Sign Up
                   </Link>
                 </>
               )}
             </div>
           </div>
-        )}
-      </nav>
-    </header>
+        </div>
+      </header>
+
+      {/* モバイルメニュー */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setIsMobileMenuOpen(false)}>
+          <div className="absolute right-0 top-0 h-full w-64 bg-white shadow-xl p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col space-y-4">
+              {/* モバイル検索（認証済みのみ） */}
+              {isAuthenticated && (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search trips..."
+                    className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-gray-900"
+                  />
+                </div>
+              )}
+
+              {/* モバイル認証ボタン */}
+              {isLoading ? (
+                <div className="text-center py-4 text-gray-400">Loading...</div>
+              ) : isAuthenticated ? (
+                <>
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="w-full px-4 py-2.5 text-center text-gray-700 font-medium bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/sign-up"
+                    className="w-full px-4 py-2.5 text-center bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

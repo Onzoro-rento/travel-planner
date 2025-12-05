@@ -1,68 +1,61 @@
-import Link from 'next/link'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth/auth.config'
+import { MapPin } from 'lucide-react'
 
 export default async function HomePage() {
-  const session = await getServerSession(authOptions)
+  const sampleTrips = [
+    { id: 1, name: 'Tokyo', color: 'bg-red-400' },
+    { id: 2, name: 'Paris', color: 'bg-blue-400' },
+    { id: 3, name: 'Bali', color: 'bg-pink-400' },
+    { id: 4, name: 'New York', color: 'bg-purple-400' },
+  ]
+
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <section className="text-center py-20">
-        <h1 className="text-5xl font-bold text-gray-900 mb-6">
-          旅プランナーへようこそ
-        </h1>
-        <p className="text-xl text-gray-600 mb-8">
-          友達と一緒に最高の旅行を計画しよう
-        </p>
-        
-        {session ? (
-          <Link
-            href="/trips"
-            className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-blue-700 transition-colors inline-block"
-          >
-            旅行を見る
-          </Link>
-        ) : (
-          <Link
-            href="/login"
-            className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-blue-700 transition-colors inline-block"
-          >
-            ログインして始める
-          </Link>
-        )}
-      </section>
+    <>
+          <div className="max-w-7xl mx-auto p-4 lg:p-8">
+            {/* モバイル用検索バー */}
+            <div className="lg:hidden mb-6">
+              <input
+                type="text"
+                placeholder="Search trips..."
+                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-gray-900"
+              />
+            </div>
 
-      <section className="grid md:grid-cols-3 gap-8 py-16">
-        <div className="text-center">
-          <div className="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">📅</span>
+
+            {/* マップ統合エリア */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 lg:p-12">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl lg:text-3xl font-bold text-gray-700 mb-3">
+                  Map Integration Area
+                </h2>
+                <p className="text-gray-500">
+                  Google Maps component will be rendered here
+                </p>
+              </div>
+
+              {/* サンプル旅行先カード */}
+              <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+                {sampleTrips.map((trip) => (
+                  <button
+                    key={trip.id}
+                    className="flex items-center justify-center gap-2 px-6 py-4 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all group"
+                  >
+                    <MapPin className={`w-5 h-5 text-white ${trip.color} rounded-full p-1`} />
+                    <span className="font-medium text-gray-800 group-hover:text-gray-900">
+                      {trip.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* モバイル用のナビゲーションヒント */}
+            <div className="lg:hidden mt-6 p-4 bg-teal-50 rounded-xl border border-teal-100">
+              <p className="text-sm text-teal-800 text-center">
+                👉 Use the sidebar menu to navigate between trips, create new ones, and more
+              </p>
+            </div>
           </div>
-          <h3 className="text-xl font-semibold mb-2">簡単な計画作成</h3>
-          <p className="text-gray-600">
-            直感的なインターフェースで旅行の計画を簡単に作成
-          </p>
-        </div>
-        
-        <div className="text-center">
-          <div className="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">👥</span>
-          </div>
-          <h3 className="text-xl font-semibold mb-2">友達と共有</h3>
-          <p className="text-gray-600">
-            友達を招待して一緒に旅行を計画できます
-          </p>
-        </div>
-        
-        <div className="text-center">
-          <div className="bg-purple-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">🗺️</span>
-          </div>
-          <h3 className="text-xl font-semibold mb-2">地図で確認</h3>
-          <p className="text-gray-600">
-            Google Mapsで訪問地を確認しながら計画
-          </p>
-        </div>
-      </section>
-    </div>
+    </>
   )
 }
