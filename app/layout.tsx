@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from 'next/font/google'
 import "./globals.css";
-import Header from "@/components/layout/Header";
 import { NextAuthProvider } from "@/lib/auth/provider";
+import Header from "@/components/layout/Header";
+import Sidebar from "@/components/layout/Sidebar";
 const inter = Inter({ subsets: ['latin'] })
 
 
@@ -23,8 +24,21 @@ export default function RootLayout({
         className={inter.className}
       >
         <NextAuthProvider>
-        <Header />
-        {children}
+          <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
+            {/* ヘッダー - 固定 */}
+            <Header />
+            
+            {/* メインレイアウト */}
+            <div className="flex flex-1 min-h-0">
+              {/* メインコンテンツエリア */}
+              <main className="flex-1 overflow-y-auto">
+                {children}
+              </main>
+
+              {/* サイドバー - 固定 */}
+              <Sidebar />
+            </div>
+          </div>
         </NextAuthProvider>
       </body>
     </html>
