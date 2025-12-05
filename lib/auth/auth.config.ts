@@ -6,6 +6,7 @@ import { JWT } from "next-auth/jwt"
 import { User} from "next-auth"
 import { Session } from "next-auth"
 import bcrypt from 'bcrypt'
+import { PrismaAdapter } from "@next-auth/prisma-adapter"
 
 export const authOptions: AuthOptions = {
   // Configure one or more authentication providers
@@ -13,6 +14,10 @@ export const authOptions: AuthOptions = {
   pages: {
     signIn: '/login',
     error: '/login',
+  },
+  adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: "jwt",
   },
   providers: [
     GithubProvider({
@@ -61,9 +66,6 @@ export const authOptions: AuthOptions = {
   })
     // ...add more providers here
   ],
-  session: {
-    strategy: "jwt",
-  },
   callbacks: {
   // 引数に型を明記
   async jwt({ token, user }: { token: JWT; user?: User }) {
