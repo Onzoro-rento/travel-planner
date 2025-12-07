@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { Inter } from 'next/font/google'
+import { Suspense } from 'react'
 import "./globals.css";
 import { NextAuthProvider } from "@/lib/auth/provider";
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
+
+
 const inter = Inter({ subsets: ['latin'] })
 
 
@@ -26,7 +29,17 @@ export default function RootLayout({
         <NextAuthProvider>
           <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
             {/* ヘッダー - 固定 */}
-            <Header />
+            <Suspense fallback={
+              <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+                <div className="px-4 lg:px-6">
+                  <div className="flex items-center justify-between h-16 lg:h-20">
+                    <div className="text-gray-400">Loading...</div>
+                  </div>
+                </div>
+              </header>
+            }>
+              <Header />
+            </Suspense>
             
             {/* メインレイアウト */}
             <div className="flex flex-1 min-h-0">

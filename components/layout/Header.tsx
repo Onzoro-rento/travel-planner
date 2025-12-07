@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
+import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import { 
   Search,
   MapPin,
@@ -13,9 +14,21 @@ import {
 
 
 export default function Header() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
+
+  // URLパラメータからviewModeを取得
+  const viewMode = (searchParams.get('view') === 'list' ? 'list' : 'map') as 'map' | 'list'
+
+  // viewMode変更時にURLパラメータを更新
+  const handleViewChange = (newView: 'map' | 'list') => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('view', newView)
+    router.push(`${pathname}?${params.toString()}`)
+  }
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/' })
@@ -65,7 +78,7 @@ export default function Header() {
             {isAuthenticated && (
               <div className="flex items-center gap-2 lg:ml-6">
               <button
-                onClick={() => setViewMode('map')}
+                onClick={() => handleViewChange('map')}
                 className={`
                   flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-2.5 rounded-lg font-medium transition-all
                   ${viewMode === 'map'
@@ -78,7 +91,7 @@ export default function Header() {
                 <span className="hidden sm:inline">Map</span>
               </button>
               <button
-                onClick={() => setViewMode('list')}
+                onClick={() => handleViewChange('list')}
                 className={`
                   flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-2.5 rounded-lg font-medium transition-all
                   ${viewMode === 'list'

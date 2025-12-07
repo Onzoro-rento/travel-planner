@@ -1,13 +1,31 @@
-export default function TripsPage() {
+import MapView from "@/features/trip/components/MapView"
+
+interface PageProps {
+  searchParams: Promise<{ view?: string }>
+}
+
+export default async function CreateTripPage({ searchParams }: PageProps) {
+  const params = await searchParams
+  const viewMode = params.view === 'list' ? 'list' : 'map'
+
   return (
-    <div className="max-w-7xl mx-auto p-4 lg:p-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">旅行一覧</h1>
-      
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-        <p className="text-gray-500 text-center">
-          旅行データが表示されます
-        </p>
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">旅行プランを作成</h1>
+        <div className="text-sm text-gray-600">
+          表示モード: <span className="font-semibold">{viewMode === 'map' ? 'マップ表示' : 'リスト表示'}</span>
+        </div>
       </div>
+
+      {viewMode === 'map' ? (
+        <MapView />
+      ) : (
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+          <p className="text-gray-600">リスト表示の実装予定</p>
+        </div>
+      )}
+
+      {/* TODO: 次：フォーム・場所追加・保存など */}
     </div>
   )
 }
