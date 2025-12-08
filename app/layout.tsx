@@ -5,6 +5,7 @@ import "./globals.css";
 import { NextAuthProvider } from "@/lib/auth/provider";
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
+import { Toaster } from "@/components/ui/sonner"
 
 
 const inter = Inter({ subsets: ['latin'] })
@@ -47,7 +48,7 @@ export default function RootLayout({
               <main className="flex-1 overflow-y-auto">
                 {children}
               </main>
-
+              <Toaster />
               {/* サイドバー - 固定 */}
               <Sidebar />
             </div>

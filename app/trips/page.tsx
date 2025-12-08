@@ -1,4 +1,4 @@
-import MapView from "@/features/trip/components/MapView"
+import MapView from "@/features/trip/components/maps/MapView"
 
 interface PageProps {
   searchParams: Promise<{ view?: string }>
@@ -10,12 +10,6 @@ export default async function CreateTripPage({ searchParams }: PageProps) {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">旅行プランを作成</h1>
-        <div className="text-sm text-gray-600">
-          表示モード: <span className="font-semibold">{viewMode === 'map' ? 'マップ表示' : 'リスト表示'}</span>
-        </div>
-      </div>
 
       {viewMode === 'map' ? (
         <MapView />

@@ -35,7 +35,7 @@ export default function MapView() {
   return (
     <APIProvider apiKey={apiKey}>
       <Map
-        style={{ width: "100%", height: "500px" }}
+        style={{ width: "100%", height: "700px" }}
         defaultCenter={currentPos}
         defaultZoom={14}
         mapId="travel-planner-map"
